@@ -18,7 +18,6 @@ impl<'a> Recommender<'a> {
         let mut queue = VecDeque::new();
         let mut recommendations = Vec::new();
 
-        // Marca o produto de origem como visitado para não recomendar a si mesmo
         visited.insert(start_product_id);
         queue.push_back(start_product_id);
 
@@ -41,14 +40,13 @@ impl<'a> Recommender<'a> {
         recommendations
     }
 
-    /// Recomenda produtos para um cliente, excluindo produtos já comprados por ele
+    /// Recomenda produtos para um cliente, excluindo os já comprados
     pub fn recommend_for_customer(&self, customer_id: u32, max_recommendations: usize) -> Vec<Product> {
         let purchases = match self.graph.get_customer_purchases(customer_id) {
             Some(p) if !p.is_empty() => p,
             _ => return Vec::new(),
         };
 
-        // Itens já comprados são inseridos no conjunto de visitados para evitar duplicatas
         let mut visited: HashSet<u32> = purchases.iter().copied().collect();
         let mut queue = VecDeque::new();
         let mut recommendations = Vec::new();
@@ -86,36 +84,36 @@ mod tests {
         let mut catalog = Catalog::new();
         let mut graph = StoreGraph::new();
 
-        // Cadastra 4 produtos
+        // Cadastra 4 produtos com o campo price adicionado
         for id in 1..=4 {
             catalog.add_product(Product {
                 id,
                 name: format!("Item {}", id),
                 category: "Tech".to_string(),
+                price: id as u64 * 1000,
             });
         }
 
-        // Cliente 1 comprou 1, 2 e 3 (cria conexões mútuas entre eles)
+        // Cliente 1 comprou 1, 2 e 3
         graph.record_purchase(1, 1);
         graph.record_purchase(1, 2);
         graph.record_purchase(1, 3);
 
-        // Cliente 2 comprou 3 e 4 (conecta 3 a 4)
+        // Cliente 2 comprou 3 e 4
         graph.record_purchase(2, 3);
         graph.record_purchase(2, 4);
 
         let recommender = Recommender::new(&catalog, &graph);
 
-        // Recomendações para quem está vendo o Produto 1
+        // Recomendações para quem consulta o Produto 1
         let recs_prod = recommender.recommend_from_product(1, 5);
         let rec_ids: Vec<u32> = recs_prod.iter().map(|p| p.id).collect();
-        
-        // O próprio produto 1 não deve estar na lista (sem duplicata)
+
         assert!(!rec_ids.contains(&1));
         assert!(rec_ids.contains(&2));
         assert!(rec_ids.contains(&3));
 
-        // Recomendações para o Cliente 2 (já comprou 3 e 4, deve receber 1 e 2)
+        // Recomendações para o Cliente 2
         let recs_cust = recommender.recommend_for_customer(2, 5);
         let cust_rec_ids: Vec<u32> = recs_cust.iter().map(|p| p.id).collect();
 
