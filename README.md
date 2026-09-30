@@ -111,4 +111,4 @@ Métricas coletadas na execução de `cargo run` com volumes crescentes de dados
 ---
 
 ## 8. Link do Vídeo Pitch
-- **Vídeo de Apresentação:** `[Inserir link público do vídeo aqui]`
+- **Vídeo de Apresentação:** https://youtu.be/qxEOQFBjiKY
